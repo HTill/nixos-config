@@ -1,6 +1,6 @@
 # NixOS + Home Manager Configuration
 
-This repository contains **NixOS system configurations** and **Home Manager user configurations** for multiple machines.
+This repository contains **NixOS system configurations** and **Home Manager user configurations** for multiple machines, organized in a **modular** way.
 
 ## Structure
 
@@ -8,14 +8,31 @@ This repository contains **NixOS system configurations** and **Home Manager user
 nixos-config/
 ├── flake.nix                      # Main flake with inputs and outputs
 ├── machines/                      # Machine-specific NixOS configurations
-│   ├── default.nix               # Default settings for all machines
+│   ├── default.nix               # Default settings for ALL machines
 │   ├── framework.nix             # Framework Laptop configuration
 │   └── ...                       # Add more machines here
 └── home/                         # Home Manager configurations
     └── till/                     # User 'till' configurations
-        ├── default.nix          # Default home configuration
-        └── fonts.nix             # Custom fonts
+        ├── default.nix          # Main config (imports all modules)
+        ├── editors/             # Optional: Editor configurations
+        │   └── neovim.nix       # Neovim configuration (disabled by default)
+        └── modules/             # Modular configurations
+            ├── git.nix         # Git + GitHub CLI
+            ├── ssh.nix         # SSH + GPG Agent
+            ├── wifi.nix        # WiFi + NetworkManager
+            ├── gitlab.nix      # GitLab CLI + config
+            ├── shell.nix       # ZSH + Starship prompt
+            ├── packages.nix    # General packages (NO editors)
+            └── fonts.nix       # Fonts configuration
 ```
+
+## Key Features
+
+✅ **Modular Design** - Each feature (SSH, WiFi, Git, etc.) is a separate module
+✅ **Multi-Machine Support** - Add as many machines as you need
+✅ **Multi-User Support** - Each user can have their own configuration
+✅ **No Secrets in Git** - Sensitive data is handled separately
+✅ **Flakes Support** - Reproducible builds
 
 ## Quick Start
 
@@ -25,13 +42,13 @@ nixos-config/
 cd /home/till/projects/nixos-config
 ```
 
-### 2. Build and activate for a specific machine
+### 2. Build and activate for Framework Laptop
 
 ```bash
-# For Framework Laptop
+# NixOS System rebuilden:
 sudo nixos-rebuild switch --flake .#framework
 
-# For Home Manager (user 'till' on Framework)
+# Home-Manager für Benutzer 'till' aktivieren:
 home-manager switch --flake .#till@framework
 ```
 
@@ -41,12 +58,30 @@ home-manager switch --flake .#till@framework
 nix flake update
 ```
 
+## Module Overview
+
+Each module in `home/till/modules/` handles a specific aspect:
+
+| Module | Purpose | Key Features |
+|--------|---------|--------------|
+| **git.nix** | Git configuration | Aliases, user info, credential helper |
+| **ssh.nix** | SSH settings | Agent, known hosts, config file |
+| **wifi.nix** | WiFi configuration | NetworkManager, power save |
+| **gitlab.nix** | GitLab integration | glab CLI, API config |
+| **shell.nix** | Shell setup | ZSH + Starship prompt |
+| **packages.nix** | General packages | Utilities, dev tools (NO editors) |
+| **fonts.nix** | Fonts | Fira Code, JetBrains Mono, Noto Fonts |
+
 ## Adding a New Machine
 
 ### Step 1: Create machine configuration
 
-Create a new file in `machines/` (e.g., `machines/desktop.nix`):
+```bash
+# Create new machine file
+nano machines/<machine-name>.nix
+```
 
+Example (`machines/desktop.nix`):
 ```nix
 { config, pkgs, lib, ... }:
 
@@ -60,15 +95,14 @@ Create a new file in `machines/` (e.g., `machines/desktop.nix`):
   # Machine-specific settings
   boot.loader.systemd-boot.enable = true;
   
-  # Add Home Manager for user
+  # Include Home Manager for user 'till'
   home-manager.users.till = import ../home/till/default.nix;
 }
 ```
 
 ### Step 2: Add to flake.nix
 
-Edit `flake.nix` and add the new machine to `nixosConfigurations`:
-
+Edit `flake.nix` and add the new machine:
 ```nix
 nixosConfigurations = {
   framework = nixpkgs.lib.nixosSystem { ... };
@@ -77,8 +111,6 @@ nixosConfigurations = {
 ```
 
 ### Step 3: Add Home Manager configuration
-
-Add a new entry to `homeConfigurations`:
 
 ```nix
 homeConfigurations = {
@@ -92,20 +124,166 @@ homeConfigurations = {
 ### Step 1: Create user directory
 
 ```bash
-mkdir -p home/<username>
+mkdir -p home/<username>/modules
 ```
 
-### Step 2: Create default.nix
+### Step 2: Create modules for the user
 
-Create `home/<username>/default.nix` with the user's Home Manager configuration.
+Create module files in `home/<username>/modules/` following the same pattern.
 
-### Step 3: Add to machine configuration
+### Step 3: Create default.nix
 
-In your machine's configuration (e.g., `machines/framework.nix`):
+```nix
+# home/<username>/default.nix
+{ config, pkgs, lib, ... }:
+{
+  imports = [
+    ./modules/git.nix
+    ./modules/ssh.nix
+    # ... other modules
+  ];
+  
+  home.username = "<username>";
+  home.homeDirectory = "/home/<username>";
+}
+```
 
+### Step 4: Add to machine configuration
+
+In your machine's configuration:
 ```nix
 home-manager.users.<username> = import ../home/<username>/default.nix;
 ```
+
+## Enabling Neovim (Optional)
+
+Neovim is **NOT** included by default (as requested). To enable it:
+
+1. Add the module to `home/till/default.nix`:
+```nix
+imports = [
+  ./modules/git.nix
+  ./modules/ssh.nix
+  ./modules/wifi.nix
+  ./modules/gitlab.nix
+  ./modules/shell.nix
+  ./modules/packages.nix
+  ./modules/fonts.nix
+  ./editors/neovim.nix  # Add this line
+];
+```
+
+2. Rebuild Home Manager:
+```bash
+home-manager switch --flake .#till@framework
+```
+
+## Customizing Modules
+
+### Git Module (`modules/git.nix`)
+
+Edit to customize:
+- User name and email
+- Git aliases
+- Default branch
+- Credential helpers
+
+### SSH Module (`modules/ssh.nix`)
+
+Edit to customize:
+- SSH known hosts
+- SSH config options
+- SSH keys (store private keys in `~/.ssh/`, not in Git!)
+
+### WiFi Module (`modules/wifi.nix`)
+
+Edit to customize:
+- WiFi power save settings
+- NetworkManager options
+- WiFi interface name
+
+### GitLab Module (`modules/gitlab.nix`)
+
+**IMPORTANT:** Never commit your GitLab token!
+
+Create a secret file:
+```bash
+# Create encrypted token (requires age)
+echo "your-gitlab-token" | age -e -i ~/.config/age/keys.txt -o secrets/gitlab-token.age
+```
+
+Then load it in your configuration:
+```nix
+# In machines/framework.nix or similar
+secrets.gitlabToken = builtins.readFile ./secrets/gitlab-token.age;
+```
+
+### Shell Module (`modules/shell.nix`)
+
+Edit to customize:
+- Shell aliases
+- ZSH plugins
+- Starship prompt appearance
+
+### Packages Module (`modules/packages.nix`)
+
+Add/remove packages here. **Editors are NOT included by default** (as requested).
+
+## Secrets Management
+
+**⚠️ NEVER commit secrets to GitHub!**
+
+### Using age encryption (recommended)
+
+1. Install age:
+```bash
+nix-env -iA nixpkgs.age
+```
+
+2. Generate key pair:
+```bash
+age-keygen -o ~/.config/age/keys.txt
+```
+
+3. Encrypt a secret:
+```bash
+echo "my-secret-password" | age -e -i ~/.config/age/keys.txt -o secrets/wifi-password.age
+```
+
+4. Add to .gitignore:
+```
+# .gitignore
+secrets/
+*.age
+*.age-key
+age.age-key
+```
+
+5. Load in configuration:
+```nix
+# In your module
+secrets.wifiPassword = builtins.readFile ./secrets/wifi-password.age;
+```
+
+### Using environment variables
+
+```bash
+# In your shell profile
+ export GITLAB_TOKEN="your-token"
+```
+
+## Framework Laptop Specifics
+
+The `machines/framework.nix` configuration includes:
+
+- **systemd-boot** for UEFI
+- **NetworkManager** for network management
+- **Wireless** support
+- **SSH Server** enabled
+- **Power management** optimized for laptops
+- **Framework-specific firmware**
+- **Touchpad** support (libinput)
+- **PipeWire** for audio
 
 ## Usage Examples
 
@@ -141,58 +319,48 @@ nix develop  # Uses devShell from flake.nix
 nix flake update
 ```
 
-## Framework Laptop Specifics
+## Common Customizations
 
-The `machines/framework.nix` configuration includes:
+### Change timezone
 
-- **systemd-boot** for UEFI
-- **NetworkManager** for network management
-- **Wireless** support
-- **SSH Server** enabled
-- **Power management** optimized for laptops
-- **Framework-specific firmware**
-- **Touchpad** support (libinput)
-- **PipeWire** for audio
+In `machines/framework.nix`:
+```nix
+time.timeZone = "Europe/Berlin";
+```
 
-## Customization
+### Add a new package
 
-### System-wide settings
+In `home/till/modules/packages.nix`:
+```nix
+home.packages = with pkgs; [
+  # ... existing packages
+  spotify
+  discord
+];
+```
 
-Edit files in `machines/` to customize system configuration for each machine.
+### Change shell prompt
 
-### User-specific settings
+In `home/till/modules/shell.nix`:
+```nix
+programs.starship.settings.format = "$all";
+```
 
-Edit files in `home/<username>/` to customize user environments.
+### Add SSH key
 
-### Adding packages
+1. Generate key:
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github
+```
 
-Add packages to:
-- `machines/<machine>/default.nix` for system-wide packages
-- `home/<user>/default.nix` for user-specific packages
-
-## Secrets Management
-
-**Never commit secrets to GitHub!**
-
-For sensitive data (passwords, API keys):
-
-1. **Use age encryption** (recommended):
-   ```bash
-   age-keygen -o age.age-key
-   echo "my-secret" | age -e -i age.age-key -o secrets/my-secret.age
-   ```
-
-2. **Add to .gitignore**:
-   ```
-   age.age-key
-   secrets/
-   *.age
-   ```
-
-3. **Load in configuration**:
-   ```nix
-   secrets = builtins.fromJSON (builtins.readFile ./secrets/my-secret.age);
-   ```
+2. Add to SSH module:
+```nix
+# In home/till/modules/ssh.nix
+ssh.extraConfig = ''
+  Host github.com
+    IdentityFile ~/.ssh/id_ed25519_github
+'';
+```
 
 ## Resources
 
@@ -200,6 +368,7 @@ For sensitive data (passwords, API keys):
 - [Home Manager Manual](https://nix-community.github.io/home-manager/)
 - [Flakes Documentation](https://nixos.wiki/wiki/Flakes)
 - [NixOS Wiki](https://nixos.wiki/)
+- [age Encryption](https://age-encryption.org/)
 
 ## License
 
