@@ -1,48 +1,36 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
-    # Framework Laptop specific configurations
-    # <nixpkgs/nixos/modules/installer/scan/not-detected.nix>  # Uncomment if needed
+    # Base configuration for all machines
+    ./default.nix
   ];
 
+  # Machine-specific settings for Framework Laptop
+  networking.hostName = "framework";
+  
   # Bootloader (systemd-boot for UEFI)
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.efi.efiSysMountPoint = "/boot";
 
-  # Kernel & Firmware (for Framework laptop hardware)
+  # Kernel & Firmware
   boot.kernelPackages = pkgs.linuxPackages_testing;
   hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = true;
 
   # Networking
-  networking.hostName = "framework";
-  networking.hostId = "deadbeef";
-  
-  # Ethernet (auto-detect)
   networking.networkmanager.enable = true;
-  
-  # WiFi (for Framework laptops)
   networking.wireless.enable = true;
-  hardware.pulseaudio.enable = true;
 
-  # SSH Server (accessible from network)
+  # SSH Server
   services.openssh.enable = true;
   services.openssh.permitRootLogin = "yes";
-  services.openssh.passwordAuthentication = true;
-  services.openssh.authorizedKeysFiles = [ 
-    "/home/till/.ssh/authorized_keys" 
-  ];
 
   # Users
   users.users.till = {
     isNormalUser = true;
     extraGroups = [ "wheel" "docker" "networkmanager" "kvm" "libvirtd" ];
-    openssh.authorizedKeys.keys = [
-      # Add your SSH public key here
-      # "ssh-rsa AAAAB3NzaC1yc2E..."
-    ];
   };
 
   # System packages
@@ -54,20 +42,13 @@
     htop
     tmux
     neofetch
-    gh  # GitHub CLI
+    gh
     nixos-rebuild
-    # Framework specific tools
     fwupd
     power-profiles-daemon
   ];
 
-  # Enable Flakes (modern Nix)
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-  # System state version
-  system.stateVersion = "23.11";
-
-  # Power management (for laptop)
+  # Power management
   powerManagement.cpuFreqGovernor = "powersave";
   powerManagement.enable = true;
 
@@ -78,7 +59,7 @@
     pulse.enable = true;
   };
 
-  # Display (for Framework laptop with Intel/AMD graphics)
+  # Display
   hardware.graphics.enable = true;
   hardware.opengl.enable = true;
 
@@ -91,35 +72,29 @@
   # Locales
   i18n.defaultLocale = "de_DE.UTF-8";
 
-  # NixOS rebuild options
+  # Nix settings
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;
 
-  # Systemd services
-  systemd.packages = with pkgs; [ networkmanager ];
-
-  # Framework Laptop specific: Enable all firmware
-  hardware.firmware = [ (pkgs.firmware).allFirmware ];
-
-  # Swap file (for laptops with limited RAM)
+  # Swap
   swapDevices = [
     { device = "/swapfile"; priority = 1000; size = 4096; }
   ];
 
-  # File systems
+  # File systems (ANPASSEN an deine Partitionen!)
   fileSystems."/" = {
-    device = "/dev/nvme0n1p2";  # Anpassen an deine Partition!
+    device = "/dev/nvme0n1p2";
     fsType = "ext4";
   };
   fileSystems."/boot" = {
-    device = "/dev/nvme0n1p1";  # Anpassen!
+    device = "/dev/nvme0n1p1";
     fsType = "vfat";
     mountOptions = [ "defaults" "umask=0077" ];
   };
 
-  # NixOS module system
-  system.modules = [
-    ({ config, ... }: {
-      # Custom configurations can go here
-    })
-  ];
+  # Framework-specific: Enable all firmware
+  hardware.firmware = [ (pkgs.firmware).allFirmware ];
+
+  # System state version
+  system.stateVersion = "23.11";
 }

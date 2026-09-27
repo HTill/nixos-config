@@ -3,12 +3,22 @@
 /result/
 *.nix.env
 
-# Local secrets (never commit these!)
+# Flakes
+/flake.lock
+
+# Home Manager
+/home/*/local
+
+# Secrets (NEVER COMMIT THESE!)
 *.age
 *.age-key
+age.age-key
+secrets/
 *.gpg
 *.pem
-secrets/
+
+# Local configuration files
+*.local
 
 # IDE
 .idea/
@@ -26,3 +36,17 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Build artifacts
+*.drv
+*.nar
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# SSH keys (if generated locally)
+.id_rsa
+.id_ed25519
+.id_ecdsa

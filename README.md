@@ -1,97 +1,205 @@
-# NixOS Configuration for Framework Laptop
+# NixOS + Home Manager Configuration
 
-This repository contains the NixOS configuration for my Framework Laptop.
+This repository contains **NixOS system configurations** and **Home Manager user configurations** for multiple machines.
 
-## Features
+## Structure
 
-- **Systemd-boot** for UEFI
-- **SSH Server** enabled (accessible from network)
-- **NetworkManager** for easy network configuration
-- **WiFi** support for Framework laptops
-- **Power management** optimized for laptops
-- **Framework-specific firmware** included
-- **Flakes** support enabled
+```
+nixos-config/
+├── flake.nix                      # Main flake with inputs and outputs
+├── machines/                      # Machine-specific NixOS configurations
+│   ├── default.nix               # Default settings for all machines
+│   ├── framework.nix             # Framework Laptop configuration
+│   └── ...                       # Add more machines here
+└── home/                         # Home Manager configurations
+    └── till/                     # User 'till' configurations
+        ├── default.nix          # Default home configuration
+        └── fonts.nix             # Custom fonts
+```
 
 ## Quick Start
 
-### 1. Install NixOS on Framework Laptop
-
-Boot from NixOS minimal ISO and run:
+### 1. Clone and enter the repository
 
 ```bash
-# Partition your disk (adjust to your needs)
-parted /dev/nvme0n1 -- mklabel gpt
-parted /dev/nvme0n1 -- mkpart primary fat32 1MiB 512MiB
-parted /dev/nvme0n1 -- mkpart primary ext4 512MiB 100%
-parted /dev/nvme0n1 -- set 1 esp on
-
-# Format partitions
-mkfs.fat -F32 /dev/nvme0n1p1
-mkfs.ext4 /dev/nvme0n1p2
-mkswap /dev/nvme0n1p3
-swapon /dev/nvme0n1p3
-
-# Mount
-mount /dev/nvme0n1p2 /mnt
-mkdir -p /mnt/boot
-mount /dev/nvme0n1p1 /mnt/boot
-
-# Generate config
-nixos-generate-config --root /mnt
-
-# Copy this config
-cp /path/to/this/configuration.nix /mnt/etc/nixos/configuration.nix
-
-# Install
-nixos-install --root /mnt
+cd /home/till/projects/nixos-config
 ```
 
-### 2. After Installation
+### 2. Build and activate for a specific machine
 
 ```bash
-# Update system
-sudo nixos-rebuild switch --upgrade
+# For Framework Laptop
+sudo nixos-rebuild switch --flake .#framework
 
-# Enable SSH access
-sudo systemctl enable --now sshd
-
-# Connect to WiFi (if needed)
-nmtui
+# For Home Manager (user 'till' on Framework)
+home-manager switch --flake .#till@framework
 ```
 
-### 3. SSH Access from Network
-
-The system is configured to allow SSH access. After installation:
+### 3. Update all flake inputs
 
 ```bash
-# Find your IP
-ip a
-
-# Connect from another machine
-ssh till@<your-ip>
+nix flake update
 ```
 
-## Configuration
+## Adding a New Machine
 
-Edit `configuration.nix` to customize:
-- **Hostname**: Change `networking.hostName`
-- **Users**: Add users in the `users.users` section
-- **SSH Keys**: Add your public keys in `users.users.<name>.openssh.authorizedKeys.keys`
-- **Partitioning**: Adjust `fileSystems` to match your disk layout
-- **Timezone**: Change `time.timeZone`
+### Step 1: Create machine configuration
+
+Create a new file in `machines/` (e.g., `machines/desktop.nix`):
+
+```nix
+{ config, pkgs, lib, ... }:
+
+{
+  imports = [
+    ./default.nix  # Include default settings
+  ];
+
+  networking.hostName = "desktop";
+  
+  # Machine-specific settings
+  boot.loader.systemd-boot.enable = true;
+  
+  # Add Home Manager for user
+  home-manager.users.till = import ../home/till/default.nix;
+}
+```
+
+### Step 2: Add to flake.nix
+
+Edit `flake.nix` and add the new machine to `nixosConfigurations`:
+
+```nix
+nixosConfigurations = {
+  framework = nixpkgs.lib.nixosSystem { ... };
+  desktop = nixpkgs.lib.nixosSystem { ... };  # Add this
+};
+```
+
+### Step 3: Add Home Manager configuration
+
+Add a new entry to `homeConfigurations`:
+
+```nix
+homeConfigurations = {
+  till@framework = home-manager.lib.homeManagerConfiguration { ... };
+  till@desktop = home-manager.lib.homeManagerConfiguration { ... };  # Add this
+};
+```
+
+## Adding a New User
+
+### Step 1: Create user directory
+
+```bash
+mkdir -p home/<username>
+```
+
+### Step 2: Create default.nix
+
+Create `home/<username>/default.nix` with the user's Home Manager configuration.
+
+### Step 3: Add to machine configuration
+
+In your machine's configuration (e.g., `machines/framework.nix`):
+
+```nix
+home-manager.users.<username> = import ../home/<username>/default.nix;
+```
+
+## Usage Examples
+
+### Rebuild NixOS
+
+```bash
+# For Framework Laptop
+sudo nixos-rebuild switch --flake .#framework
+
+# For another machine
+sudo nixos-rebuild switch --flake .#desktop
+```
+
+### Update Home Manager
+
+```bash
+# For user 'till' on Framework
+home-manager switch --flake .#till@framework
+
+# For user 'till' on Desktop
+home-manager switch --flake .#till@desktop
+```
+
+### Enter development shell
+
+```bash
+nix develop  # Uses devShell from flake.nix
+```
+
+### Update all inputs
+
+```bash
+nix flake update
+```
 
 ## Framework Laptop Specifics
 
-- **Firmware**: All redistributable firmware is enabled
-- **Graphics**: Intel/AMD graphics support included
-- **Power**: Optimized for battery life
-- **Touchpad**: Libinput configured
+The `machines/framework.nix` configuration includes:
+
+- **systemd-boot** for UEFI
+- **NetworkManager** for network management
+- **Wireless** support
+- **SSH Server** enabled
+- **Power management** optimized for laptops
+- **Framework-specific firmware**
+- **Touchpad** support (libinput)
+- **PipeWire** for audio
+
+## Customization
+
+### System-wide settings
+
+Edit files in `machines/` to customize system configuration for each machine.
+
+### User-specific settings
+
+Edit files in `home/<username>/` to customize user environments.
+
+### Adding packages
+
+Add packages to:
+- `machines/<machine>/default.nix` for system-wide packages
+- `home/<user>/default.nix` for user-specific packages
+
+## Secrets Management
+
+**Never commit secrets to GitHub!**
+
+For sensitive data (passwords, API keys):
+
+1. **Use age encryption** (recommended):
+   ```bash
+   age-keygen -o age.age-key
+   echo "my-secret" | age -e -i age.age-key -o secrets/my-secret.age
+   ```
+
+2. **Add to .gitignore**:
+   ```
+   age.age-key
+   secrets/
+   *.age
+   ```
+
+3. **Load in configuration**:
+   ```nix
+   secrets = builtins.fromJSON (builtins.readFile ./secrets/my-secret.age);
+   ```
 
 ## Resources
 
 - [NixOS Manual](https://nixos.org/manual/nixos/stable/)
-- [Framework Laptop Docs](https://frame.work/)
-- [NixOS on Framework](https://nixos.wiki/wiki/Framework)
+- [Home Manager Manual](https://nix-community.github.io/home-manager/)
+- [Flakes Documentation](https://nixos.wiki/wiki/Flakes)
+- [NixOS Wiki](https://nixos.wiki/)
 
 ## License
 
