@@ -20,7 +20,7 @@
 
   # Environment variables
   home.sessionVariables = {
-    EDITOR = "nvim";
+    EDITOR = "nano";
     PAGER = "bat";
     BROWSER = "firefox";
   };

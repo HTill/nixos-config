@@ -11,7 +11,7 @@
     
     # Core settings
     core = {
-      editor = "nvim";
+      editor = "nano";
       pager = "bat";
       autocrlf = "input";
       safecrlf = "warn";

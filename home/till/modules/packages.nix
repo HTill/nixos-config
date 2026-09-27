@@ -7,6 +7,7 @@
     # System utilities
     htop
     tmux
+    nano
     wget
     curl
     jq
