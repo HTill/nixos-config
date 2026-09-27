@@ -1,0 +1,28 @@
+# NixOS
+/nixos/
+/result/
+*.nix.env
+
+# Local secrets (never commit these!)
+*.age
+*.age-key
+*.gpg
+*.pem
+secrets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
