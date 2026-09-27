@@ -22,6 +22,12 @@
   # Networking
   networking.networkmanager.enable = true;
   networking.wireless.enable = true;
+  
+  # NetworkManager WiFi settings (system-level)
+  networking.networkmanager.wifi = {
+    powersave = 2;  # 0 = disabled, 1 = low, 2 = medium, 3 = high
+    backgroundScan = "yes:60";
+  };
 
   # SSH Server
   services.openssh.enable = true;
