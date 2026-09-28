@@ -1,8 +1,12 @@
 { config, pkgs, lib, ... }:
 
 {
+  imports = [
+    ../secrets-helper.nix  # Load secrets from YAML
+  ];
+
   # Git configuration module
-  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
+  # ⚠️  SECRETS: Loaded from secrets.yaml (not in git)
   
   programs.git = {
     enable = true;
@@ -51,12 +55,10 @@
     git
     git-lfs
     gh
-    delta  # Better diff viewer
-    git-extras  # Additional git utilities
+    delta
+    git-extras
   ];
 
-  # ⚠️  SECRET: GitHub Personal Access Token
-  # Ersetze das mit deinem echten Token von https://github.com/settings/tokens
-  # Format: github_pat_11A... oder ghp_...
-  home.sessionVariables.GITHUB_TOKEN = "DEIN_GITHUB_TOKEN_HIER";
+  # GitHub Token from secrets.yaml
+  home.sessionVariables.GITHUB_TOKEN = config.secrets.github.token;
 }

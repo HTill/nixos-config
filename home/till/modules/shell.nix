@@ -14,14 +14,14 @@
       { name = "zsh-history-substring-search"; }
     ];
     
-    # Shell options
+    # Shell aliases
     shellAliases = {
       ll = "exa -la --git --icons";
       ls = "exa -la --git --icons";
       la = "exa -la --git --icons";
       cat = "bat";
-      v = "nvim";
-      e = "nvim";
+      v = "nano";
+      e = "nano";
       g = "git";
       h = "history";
       hg = "history | grep";
@@ -95,20 +95,6 @@
         style = "bg:yellow fg:black";
       };
       
-      # Node.js
-      nodejs = {
-        symbol = " ";
-        style = "bg:green fg:white bold";
-        format = "[$symbol$version]($style) ";
-      };
-      
-      # Python
-      python = {
-        symbol = " ";
-        style = "bg:blue fg:white bold";
-        format = "[$symbol$virtualenv]($style) ";
-      };
-      
       # Character
       character = {
         success_symbol = "[❯](bold green)";
@@ -122,13 +108,13 @@
   home.packages = with pkgs; [
     zsh
     starship
-    exa  # Better ls
-    bat  # Better cat
-    fd   # Better find
-    ripgrep  # Better grep
-    fzf  # Fuzzy finder
-    thefuck  # Command correction
-    zoxide  # Better cd
+    exa
+    bat
+    fd
+    ripgrep
+    fzf
+    thefuck
+    zoxide
   ];
 
   # Default shell

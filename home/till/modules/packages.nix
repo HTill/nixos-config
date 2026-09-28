@@ -1,13 +1,12 @@
 { config, pkgs, lib, ... }:
 
 {
-  # General packages module (without editors)
+  # General packages module
   
   home.packages = with pkgs; [
     # System utilities
     htop
     tmux
-    nano
     wget
     curl
     jq
@@ -16,8 +15,8 @@
     # File management
     rclone
     tree
-    duf  # Better df
-    ncdu  # Disk usage analyzer
+    duf
+    ncdu
     
     # Text processing
     sed
@@ -32,15 +31,15 @@
     xz
     
     # Networking
-    net-tools  # ifconfig, netstat
-    iproute2  # ip
-    dnsutils  # dig, nslookup
+    net-tools
+    iproute2
+    dnsutils
     mtr
     nmap
     
     # Security
     gnupg
-    pass  # Password manager
+    pass
     
     # Development tools
     make
@@ -49,7 +48,7 @@
     automake
     pkg-config
     
-    # Version control (Git is in git.nix)
+    # Version control
     mercurial
     
     # Containers
@@ -62,40 +61,11 @@
     python3Packages.virtualenv
     python3Packages.poetry
     
-    # Rust (optional)
-    # rustc
-    # cargo
-    
-    # JavaScript (optional)
-    # nodejs
-    # yarn
-    # pnpm
-    
-    # Java (optional)
-    # jdk
-    
-    # Go (optional)
-    # go
-    
-    # Database clients
-    postgresql
-    mysql
-    redis
-    
-    # Cloud tools
-    awscli2
-    
     # Media
     ffmpeg
     imagemagick
     
     # Office
     libreoffice
-    
-    # GUI tools (if using X11/Wayland)
-    # firefox
-    # thunderbird
-    # gimp
-    # inkscape
   ];
 }

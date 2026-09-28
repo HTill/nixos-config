@@ -9,16 +9,8 @@
 # Home Manager
 /home/*/local
 
-# Secrets (NICHT IN GIT PUSHEN!)
-# System-Level Secrets
-machines/*/secrets.nix
-machines/*/secrets.yaml
-
-# User-Level Secrets (till)
-home/till/modules/git.nix
-home/till/modules/gitlab.nix
-home/till/modules/ssh.nix
-home/till/secrets.nix
+# Central secrets file (YAML)
+home/till/secrets.yaml
 
 # Private Keys
 *.pem
@@ -27,10 +19,8 @@ id_*
 *.age
 *.age-key
 age.age-key
-
-# Secret files
 secrets/
-secrets.yaml
+~/.config/age/
 
 # Local configuration files
 *.local

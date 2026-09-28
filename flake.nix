@@ -7,9 +7,6 @@
     # Home Manager
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    
-    # Optional: Additional overlays or modules
-    # flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = { self, nixpkgs, home-manager, ... }:
@@ -23,21 +20,18 @@
           inherit system;
           modules = [
             ./machines/framework.nix
-            # Include Home Manager for user 'till'
             home-manager.nixosModules.home-manager {
-              home-manager.users.till = import ./home/till/default.nix;
+              home-manager.users.till = import ./home/till/home.nix;
             }
           ];
         };
-        # Add more machines here, e.g.:
-        # desktop = nixpkgs.lib.nixosSystem { ... };
       };
 
       # Home Manager configurations for different users
       homeConfigurations = {
         till@framework = home-manager.lib.homeManagerConfiguration {
           inherit system;
-          configuration = import ./home/till/default.nix;
+          configuration = import ./home/till/home.nix;
           pkgs = nixpkgs.legacyPackages.${system};
         };
       };
@@ -54,6 +48,7 @@
           tmux
           gh
           nixos-rebuild
+          yq  # For YAML parsing
         ];
       };
     };

@@ -1,23 +1,25 @@
 { config, pkgs, lib, ... }:
 
 {
+  imports = [
+    ../secrets-helper.nix  # Load secrets from YAML
+  ];
+
   # GitLab configuration module
-  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
+  # ⚠️  SECRETS: Loaded from secrets.yaml (not in git)
   
   # GitLab CLI (glab)
   home.packages = with pkgs; [
     glab  # GitLab CLI tool
   ];
 
-  # ⚠️  SECRET: GitLab Personal Access Token
-  # Ersetze das mit deinem echten Token von https://gitlab.com/-/profile/personal_access_tokens
-  # Format: glpat-xxxxxxxxxxxxx
-  home.sessionVariables.GITLAB_TOKEN = "DEIN_GITLAB_TOKEN_HIER";
+  # GitLab Token from secrets.yaml
+  home.sessionVariables.GITLAB_TOKEN = config.secrets.gitlab.token;
 
   # GitLab configuration file
   xdg.configFile."glab-cli/config.yml".text = ''
     host: gitlab.com
-    token: ${config.home.sessionVariables.GITLAB_TOKEN}
+    token: ${config.secrets.gitlab.token}
     api_host: gitlab.com
     git_protocol: https
     browser: firefox

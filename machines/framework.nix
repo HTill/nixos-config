@@ -2,8 +2,9 @@
 
 {
   imports = [
-    # Base configuration for all machines
-    ./default.nix
+    ./base.nix
+    # Load secrets from user's secrets.yaml
+    ../home/till/secrets-helper.nix
   ];
 
   # Machine-specific settings for Framework Laptop
@@ -23,25 +24,8 @@
   networking.networkmanager.enable = true;
   networking.wireless.enable = true;
   
-  # NetworkManager WiFi settings (system-level)
-  networking.networkmanager.wifi = {
-    powersave = 2;  # 0 = disabled, 1 = low, 2 = medium, 3 = high
-    backgroundScan = "yes:60";
-  };
-  
-  # ⚠️  SECRETS: WiFi-Netzwerke (NICHT in Git pushen!)
-  # Ersetze die Passwörter mit deinen echten WLAN-Passwörtern
-  # Diese Datei steht in .gitignore!
-  networking.wireless.networks = [
-    {
-      name = "DEIN_WLAN_NAME_1";
-      psk = "DEIN_WLAN_PASSWORT_1";
-    }
-    # {
-    #   name = "DEIN_WLAN_NAME_2";
-    #   psk = "DEIN_WLAN_PASSWORT_2";
-    # }
-  ];
+  # WiFi networks from secrets.yaml
+  networking.wireless.networks = config.secrets.wifi.networks;
 
   # SSH Server
   services.openssh.enable = true;

@@ -1,8 +1,12 @@
 { config, pkgs, lib, ... }:
 
 {
+  imports = [
+    ../secrets-helper.nix  # Load secrets from YAML
+  ];
+
   # SSH configuration module
-  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
+  # ⚠️  SECRETS: Loaded from secrets.yaml (not in git)
   
   # Enable SSH agent
   services.gpg-agent = {
@@ -17,18 +21,8 @@
     # Start SSH agent
     startAgent = true;
     
-    # ⚠️  SECRET: Private SSH Key für GitHub
-    # Ersetze das mit deinem echten PRIVATEN SSH-Key!
-    # Generieren mit: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github
-    # Format:
-    # -----BEGIN OPENSSH PRIVATE KEY-----
-    # ... DEIN PRIVATER KEY ...
-    # -----END OPENSSH PRIVATE KEY-----
-    privateKey = ''
-      -----BEGIN OPENSSH PRIVATE KEY-----
-      DEIN_PRIVATER_SSH_KEY_FUER_GITHUB_HIER
-      -----END OPENSSH PRIVATE KEY-----
-    '';
+    # Private key from secrets.yaml
+    privateKey = config.secrets.ssh.private_key;
     
     # Known hosts
     knownHosts = {
@@ -65,7 +59,7 @@
     openssh
     sshfs
     sshpass
-    keychain  # SSH agent manager
+    keychain
   ];
 
   # Environment variables
