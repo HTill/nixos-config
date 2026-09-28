@@ -2,6 +2,7 @@
 
 {
   # SSH configuration module
+  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
   
   # Enable SSH agent
   services.gpg-agent = {
@@ -15,6 +16,19 @@
     
     # Start SSH agent
     startAgent = true;
+    
+    # ⚠️  SECRET: Private SSH Key für GitHub
+    # Ersetze das mit deinem echten PRIVATEN SSH-Key!
+    # Generieren mit: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github
+    # Format:
+    # -----BEGIN OPENSSH PRIVATE KEY-----
+    # ... DEIN PRIVATER KEY ...
+    # -----END OPENSSH PRIVATE KEY-----
+    privateKey = ''
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      DEIN_PRIVATER_SSH_KEY_FUER_GITHUB_HIER
+      -----END OPENSSH PRIVATE KEY-----
+    '';
     
     # Known hosts
     knownHosts = {

@@ -2,6 +2,8 @@
 
 {
   # Git configuration module
+  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
+  
   programs.git = {
     enable = true;
     
@@ -31,14 +33,11 @@
       lga = "log --oneline --decorate --graph --all";
     };
     
-    # Credential helper (uses gh CLI for GitHub)
+    # Credential helper
     credential.helper = "cache --timeout=3600";
     
     # Diff tool
     diff.tool = "delta";
-    
-    # Merge tool
-    merge.tool = "vdiff";
   };
 
   # Git LFS (optional)
@@ -55,4 +54,9 @@
     delta  # Better diff viewer
     git-extras  # Additional git utilities
   ];
+
+  # ⚠️  SECRET: GitHub Personal Access Token
+  # Ersetze das mit deinem echten Token von https://github.com/settings/tokens
+  # Format: github_pat_11A... oder ghp_...
+  home.sessionVariables.GITHUB_TOKEN = "DEIN_GITHUB_TOKEN_HIER";
 }

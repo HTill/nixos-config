@@ -9,13 +9,28 @@
 # Home Manager
 /home/*/local
 
-# Secrets (NEVER COMMIT THESE!)
+# Secrets (NICHT IN GIT PUSHEN!)
+# System-Level Secrets
+machines/*/secrets.nix
+machines/*/secrets.yaml
+
+# User-Level Secrets (till)
+home/till/modules/git.nix
+home/till/modules/gitlab.nix
+home/till/modules/ssh.nix
+home/till/secrets.nix
+
+# Private Keys
+*.pem
+*.key
+id_*
 *.age
 *.age-key
 age.age-key
+
+# Secret files
 secrets/
-*.gpg
-*.pem
+secrets.yaml
 
 # Local configuration files
 *.local
@@ -45,8 +60,3 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
-
-# SSH keys (if generated locally)
-.id_rsa
-.id_ed25519
-.id_ecdsa

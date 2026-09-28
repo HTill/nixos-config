@@ -2,18 +2,17 @@
 
 {
   # GitLab configuration module
+  # ⚠️  SECRETS: Diese Datei NICHT in Git pushen! (steht in .gitignore)
   
   # GitLab CLI (glab)
   home.packages = with pkgs; [
     glab  # GitLab CLI tool
   ];
 
-  # GitLab environment variables
-  home.sessionVariables = {
-    GITLAB_USER = "HTill";
-    # GITLAB_TOKEN wird NICHT hier gespeichert! (siehe README.md)
-    GITLAB_HOST = "gitlab.com";
-  };
+  # ⚠️  SECRET: GitLab Personal Access Token
+  # Ersetze das mit deinem echten Token von https://gitlab.com/-/profile/personal_access_tokens
+  # Format: glpat-xxxxxxxxxxxxx
+  home.sessionVariables.GITLAB_TOKEN = "DEIN_GITLAB_TOKEN_HIER";
 
   # GitLab configuration file
   xdg.configFile."glab-cli/config.yml".text = ''
