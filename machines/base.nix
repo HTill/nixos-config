@@ -49,5 +49,5 @@
   i18n.defaultLocale = "de_DE.UTF-8";
 
   # Basic system settings
-  system.stateVersion = "23.11";
+  system.stateVersion = "26.05";
 }

@@ -39,7 +39,7 @@ nixos-config/
 ### 1. Clone and enter the repository
 
 ```bash
-cd /home/till/projects/nixos-config
+cd ~/projects/coding-projects/nixos-config
 ```
 
 ### 2. Build and activate for Framework Laptop
@@ -274,16 +274,52 @@ secrets.wifiPassword = builtins.readFile ./secrets/wifi-password.age;
 
 ## Framework Laptop Specifics
 
-The `machines/framework.nix` configuration includes:
+The `machines/framework.nix` configuration (Framework 13, **AMD Ryzen 7040**,
+hardware profile `nixos-hardware.nixosModules.framework-13-7040-amd`) includes:
 
 - **systemd-boot** for UEFI
-- **NetworkManager** for network management
-- **Wireless** support
-- **SSH Server** enabled
-- **Power management** optimized for laptops
-- **Framework-specific firmware**
-- **Touchpad** support (libinput)
-- **PipeWire** for audio
+- **KDE Plasma 6 desktop** (SDDM login manager, Wayland available)
+- **Docker** daemon (user `till` is in the `docker` group)
+- **Firefox** (system package + home-manager `programs.firefox`)
+- **NetworkManager** with WLAN auto-connect from `secrets.yaml`; **LAN works via DHCP plug & play**
+- **Bluetooth**, **SSH Server**, **power-profiles-daemon** (recommended for AMD 7040)
+- **Framework firmware** (`linuxFirmware`) + AMD microcode
+- **Touchpad** (libinput), **PipeWire** audio, graphics (amdgpu via hardware profile)
+
+## Local homeserver (Forgejo + Tailscale) — `machines/homeserver.nix`
+
+The Framework laptop doubles as a private homeserver:
+
+- **Tailscale** — encrypted access from anywhere: `sudo tailscale up`
+- **Forgejo** (own Git server, no GitHub/Microsoft): http://localhost:3000 locally,
+  `http://framework.local:3000` in your home WLAN/LAN (mDNS),
+  `http://framework.<tailnet>.ts.net:3000` via Tailscale.
+  Git over SSH: `ssh://git@framework:2222/<user>/<repo>.git`
+  (Forgejo's own SSH on port 2222; system sshd stays on 22).
+  New repos are **private by default**, registration is disabled.
+- Firewall: Tailscale interface trusted; ports 3000/2222 additionally open
+  **only for private LAN ranges** (192.168/16, 10/8, 172.16/12) — nothing is
+  exposed to the public internet.
+- First boot, create your admin user:
+  ```bash
+  sudo -u forgejo forgejo admin user create --admin \
+    --username till --email till@example.com --password '...' \
+    --config /var/lib/forgejo/custom/conf/app.ini
+  ```
+- Offsite backup of `/var/lib/forgejo` via **restic** (zero-knowledge) to the
+  Hetzner Storage Box, daily 04:00 — see the manual one-time setup comment in
+  `machines/homeserver.nix`.
+
+## Installer ISO (boot USB stick)
+
+```bash
+cd ~/projects/coding-projects/nixos-config
+nix build .#iso                       # graphical NixOS installer ISO
+sudo dd if=$(echo result/iso/*.iso) of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Boot the Framework from the USB stick, run the graphical installer, then
+clone this repo and `sudo nixos-rebuild switch --flake .#framework`.
 
 ## Usage Examples
 

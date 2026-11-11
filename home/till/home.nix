@@ -12,6 +12,7 @@
     ./modules/shell.nix
     ./modules/packages.nix
     ./modules/fonts.nix
+    ./modules/firefox.nix
   ];
 
   # Home directory

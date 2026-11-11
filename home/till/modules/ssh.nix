@@ -1,13 +1,10 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = [
-    ../secrets-helper.nix  # Load secrets from YAML
-  ];
-
   # SSH configuration module
-  # ⚠️  SECRETS: Loaded from secrets.yaml (not in git)
-  
+  # Note: Private keys stay on your LOCAL machine.
+  # Only public keys are deployed to servers via authorized_keys.
+
   # Enable SSH agent
   services.gpg-agent = {
     enable = true;
@@ -20,9 +17,6 @@
     
     # Start SSH agent
     startAgent = true;
-    
-    # Private key from secrets.yaml
-    privateKey = config.secrets.ssh.private_key;
     
     # Known hosts
     knownHosts = {
