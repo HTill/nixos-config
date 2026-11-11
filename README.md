@@ -286,26 +286,31 @@ hardware profile `nixos-hardware.nixosModules.framework-13-7040-amd`) includes:
 - **Framework firmware** (`linuxFirmware`) + AMD microcode
 - **Touchpad** (libinput), **PipeWire** audio, graphics (amdgpu via hardware profile)
 
-## Local homeserver (Forgejo + Tailscale) — `machines/homeserver.nix`
+## Local homeserver (Forgejo + Home Assistant) — `machines/homeserver.nix`
 
-The Framework laptop doubles as a private homeserver:
+The Framework laptop doubles as a private homeserver, reachable in the
+**home WLAN/LAN only** as `framework.local` (mDNS). Nothing is exposed to
+the public internet.
 
-- **Tailscale** — encrypted access from anywhere: `sudo tailscale up`
 - **Forgejo** (own Git server, no GitHub/Microsoft): http://localhost:3000 locally,
-  `http://framework.local:3000` in your home WLAN/LAN (mDNS),
-  `http://framework.<tailnet>.ts.net:3000` via Tailscale.
-  Git over SSH: `ssh://git@framework:2222/<user>/<repo>.git`
+  `http://framework.local:3000` in the home WLAN/LAN.
+  Git over SSH: `ssh://git@framework.local:2222/<user>/<repo>.git`
   (Forgejo's own SSH on port 2222; system sshd stays on 22).
   New repos are **private by default**, registration is disabled.
-- Firewall: Tailscale interface trusted; ports **22/3000/2222** additionally
-  open **only for private LAN ranges** (192.168/16, 10/8, 172.16/12) — nothing
-  is exposed to the public internet.
+- **Home Assistant:** `http://framework.local:8123` (see below).
+- Firewall: ports **22/3000/2222/8123** open **only for private LAN ranges**
+  (192.168/16, 10/8, 172.16/12) — nothing exposed publicly.
 - **SSH access from your other machines:** the public key of this repo's
   `secrets.yaml` (`ssh.public_key`) is deployed to `till`'s `authorized_keys`
   on the server. From another machine in the home LAN:
-  `ssh till@framework.local` (mDNS) — or from anywhere via Tailscale:
-  `ssh till@framework.<tailnet>.ts.net`. Add a `~/.ssh/config` Host entry with
+  `ssh till@framework.local` (mDNS). Add a `~/.ssh/config` Host entry with
   `IdentityFile` pointing at the matching private key.
+- **Later/optional — access from anywhere:** enable Tailscale
+  (`services.tailscale.enable = true` in `machines/homeserver.nix` + add
+  `"tailscale0"` to `firewall.trustedInterfaces`), or — for full privacy, no
+  US company — self-host **headscale** (`services.headscale`) on this machine
+  and point the tailscale clients at it via `--login-server`.
+  Then: `ssh till@framework.<tailnet>.ts.net`.
 - First boot, create your admin user:
   ```bash
   sudo -u forgejo forgejo admin user create --admin \
@@ -321,8 +326,7 @@ The Framework laptop doubles as a private homeserver:
 Runs on the same homeserver (lightweight, ~1 GB RAM; data in `/var/lib/hass`,
 included in the restic backup):
 
-- Web UI: `http://framework.local:8123` (home LAN/WLAN) or
-  `http://framework.<tailnet>.ts.net:8123` (via Tailscale)
+- Web UI: `http://framework.local:8123` (home LAN/WLAN)
 - First start: open the web UI and complete **onboarding** (creates the admin user)
 - Firewall: port 8123 open only from private LAN ranges + Tailscale
 - Integrations added: `met` (weather), `esphome`, `tasmota`, `radio_browser`
@@ -363,8 +367,8 @@ sudo mount /dev/disk/by-label/BOOT /mnt/boot
 sudo nixos-install --flake github:HTill/nixos-config/framework13-homeserver#framework
 
 # 5. Reboot, remove the stick. After first boot:
-sudo tailscale up        # homeserver reachable from anywhere
 # create Forgejo admin user (see "Local homeserver" section above)
+# (Tailscale is disabled for now — home LAN only; see homeserver.nix)
 ```
 
 ## Usage Examples

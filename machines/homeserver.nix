@@ -4,8 +4,11 @@
 # Reachable from anywhere via Tailscale (WireGuard) and inside the home
 # LAN/WLAN as "framework.local" (mDNS). Never exposed to the public internet.
 {
-  # --- Tailscale: encrypted access from anywhere (phone, other laptops) ---
-  services.tailscale.enable = true;
+  # --- Tailscale: DISABLED for now — we stay in the home LAN/WLAN only.
+  # Later (access from anywhere), either enable Tailscale here:
+  #   services.tailscale.enable = true;
+  # or better, for full privacy: self-host headscale (services.headscale) instead.
+  services.tailscale.enable = false;
 
   # --- mDNS/Avahi: "framework.local" inside the home WLAN/LAN ---
   services.avahi = {
@@ -43,11 +46,11 @@
   };
 
   # --- Firewall ---
-  # Tailscale interface is fully trusted (SSH + Forgejo + HA reachable via VPN).
   # Nothing exposed to the public internet: no globally open TCP ports.
   # These ports are open only from private LAN/WLAN ranges (RFC1918):
   #   22 ssh · 3000 forgejo http · 2222 forgejo git-ssh · 8123 home-assistant
-  networking.firewall.trustedInterfaces = [ "tailscale0" ];
+  # (When Tailscale/Headscale gets enabled later, also add "tailscale0"
+  #  to trustedInterfaces so the services are reachable via VPN too.)
   networking.firewall.allowedTCPPorts = lib.mkForce [ ];
   networking.firewall.extraCommands =
     let
