@@ -43,55 +43,55 @@
   };
 
   # --- Firewall ---
-  # Tailscale interface is fully trusted (SSH + Forgejo reachable via VPN).
-  networking.firewall.trustedInterfaces = [ "tailscale0" ];
+  # Tailscale interface is fully trusted (SSH + Forgejo + HA reachable via VPN).
   # Nothing exposed to the public internet: no globally open TCP ports.
-  # SSH (22), Forgejo HTTP (3000) and git-ssh (2222) are allowed only from
-  # private LAN/WLAN ranges (RFC1918) — plus Tailscale via trustedInterfaces.
+  # These ports are open only from private LAN/WLAN ranges (RFC1918):
+  #   22 ssh · 3000 forgejo http · 2222 forgejo git-ssh · 8123 home-assistant
+  networking.firewall.trustedInterfaces = [ "tailscale0" ];
   networking.firewall.allowedTCPPorts = lib.mkForce [ ];
-  networking.firewall.extraCommands = ''
-    ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 22   -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 3000 -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 2222 -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 22   -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 3000 -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 2222 -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 22   -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 3000 -j nixos-fw-accept
-    ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 2222 -j nixos-fw-accept
-  '';
+  networking.firewall.extraCommands =
+    let
+      ports = [ 22 3000 2222 8123 ];
+      nets = [ "192.168.0.0/16" "10.0.0.0/8" "172.16.0.0/12" ];
+    in
+    lib.concatMapStrings
+      (port: lib.concatMapStrings (net: ''
+        ip46tables -A nixos-fw -p tcp -s ${net} --dport ${toString port} -j nixos-fw-accept
+      '') nets)
+      ports;
 
   environment.systemPackages = with pkgs; [
     forgejo
     restic
   ];
 
-  # --- Encrypted offsite backup of the Forgejo data (zero-knowledge restic) ---
+  # --- Encrypted offsite backup of the homeserver data (zero-knowledge restic) ---
+  # Backs up /var/lib/forgejo and /var/lib/hass (Home Assistant).
   # One-time manual setup (files live OUTSIDE the nix store on purpose):
   #   sudo mkdir -p /root/.config/restic /root/.secrets
-  #   sudo sh -c 'openssl rand -base64 36 > /root/.secrets/restic-forgejo.password && chmod 600 /root/.secrets/restic-forgejo.password'
+  #   sudo sh -c 'openssl rand -base64 36 > /root/.secrets/restic-homeserver.password && chmod 600 /root/.secrets/restic-homeserver.password'
   #   sudoedit /root/.config/restic/restic.env
-  #     RESTIC_REPOSITORY=sftp:uXXXXX@uXXXXX.your-storagebox.de:23/restic-forgejo
-  #     RESTIC_PASSWORD_FILE=/root/.secrets/restic-forgejo.password
+  #     RESTIC_REPOSITORY=sftp:uXXXXX@uXXXXX.your-storagebox.de:23/restic-homeserver
+  #     RESTIC_PASSWORD_FILE=/root/.secrets/restic-homeserver.password
   #     RESTIC_CACHE_DIR=/root/.cache/restic
-  systemd.services.restic-forgejo-backup = {
-    description = "restic encrypted backup of /var/lib/forgejo (zero-knowledge offsite)";
+  systemd.services.restic-homeserver-backup = {
+    description = "restic encrypted backup of /var/lib/forgejo + /var/lib/hass (zero-knowledge offsite)";
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
     path = with pkgs; [ restic openssh bash coreutils ];
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = "/root/.config/restic/restic.env";
-      ExecStart = pkgs.writeShellScript "restic-forgejo-backup" ''
+      ExecStart = pkgs.writeShellScript "restic-homeserver-backup" ''
         restic unlock --remove-all 2>/dev/null || true
-        restic backup /var/lib/forgejo --tag forgejo --host framework
-        restic forget --prune --tag forgejo --host framework \
+        restic backup /var/lib/forgejo /var/lib/hass --tag homeserver --host framework
+        restic forget --prune --tag homeserver --host framework \
           --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --keep-yearly 2
         restic check --read-data-subset=5%
       '';
     };
   };
-  systemd.timers.restic-forgejo-backup = {
+  systemd.timers.restic-homeserver-backup = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "*-*-* 04:00";

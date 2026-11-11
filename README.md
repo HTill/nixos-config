@@ -312,9 +312,25 @@ The Framework laptop doubles as a private homeserver:
     --username till --email till@example.com --password '...' \
     --config /var/lib/forgejo/custom/conf/app.ini
   ```
-- Offsite backup of `/var/lib/forgejo` via **restic** (zero-knowledge) to the
-  Hetzner Storage Box, daily 04:00 — see the manual one-time setup comment in
-  `machines/homeserver.nix`.
+- Offsite backup of `/var/lib/forgejo` + `/var/lib/hass` via **restic**
+  (zero-knowledge) to the Hetzner Storage Box, daily 04:00 — see the manual
+  one-time setup comment in `machines/homeserver.nix`.
+
+## Home Assistant — `machines/homeassistant.nix`
+
+Runs on the same homeserver (lightweight, ~1 GB RAM; data in `/var/lib/hass`,
+included in the restic backup):
+
+- Web UI: `http://framework.local:8123` (home LAN/WLAN) or
+  `http://framework.<tailnet>.ts.net:8123` (via Tailscale)
+- First start: open the web UI and complete **onboarding** (creates the admin user)
+- Firewall: port 8123 open only from private LAN ranges + Tailscale
+- Integrations added: `met` (weather), `esphome`, `tasmota`, `radio_browser`
+
+> **GitLab CE was deliberately left out** — it needs 8–16 GB RAM and would
+> starve the laptop next to Plasma + Forgejo + Home Assistant. Forgejo covers
+> private git hosting. If you ever get a dedicated server, GitLab CE can be
+> added there as its own machine config.
 
 ## Installer ISO (boot USB stick)
 

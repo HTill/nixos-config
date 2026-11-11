@@ -30,6 +30,7 @@
             nixos-hardware.nixosModules.framework-13-7040-amd
             ./machines/framework.nix
             ./machines/homeserver.nix
+            ./machines/homeassistant.nix
             home-manager.nixosModules.home-manager {
               home-manager.users.till = import ./home/till/home.nix;
             }
