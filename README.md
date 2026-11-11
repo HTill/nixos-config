@@ -312,14 +312,38 @@ The Framework laptop doubles as a private homeserver:
 
 ## Installer ISO (boot USB stick)
 
-```bash
-cd ~/projects/coding-projects/nixos-config
-nix build .#iso                       # graphical NixOS installer ISO
-sudo dd if=$(echo result/iso/*.iso) of=/dev/sdX bs=4M status=progress conv=fsync
-```
+Use the official NixOS 26.05 **graphical** ISO and install directly from this
+repo's flake (branch `framework13-homeserver`):
 
-Boot the Framework from the USB stick, run the graphical installer, then
-clone this repo and `sudo nixos-rebuild switch --flake .#framework`.
+```bash
+# 1. On the current machine: download + verify + write to the USB stick
+curl -LO https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso
+curl -LO https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso.sha256
+sha256sum -c latest-nixos-graphical-x86_64-linux.iso.sha256
+lsblk                                   # identify the stick (e.g. /dev/sdc)
+sudo dd if=latest-nixos-graphical-x86_64-linux.iso of=/dev/sdX bs=4M status=progress conv=fsync
+sync
+
+# 2. Boot the Framework 13 from the stick (USB boot; F12 for boot menu)
+
+# 3. In the live system: partition the internal NVMe with LABELS
+sudo parted /dev/nvme0n1 mklabel gpt
+sudo parted -a opt /dev/nvme0n1 mkpart ESP fat32 1MiB 1GiB
+sudo parted /dev/nvme0n1 set 1 esp on
+sudo parted -a opt /dev/nvme0n1 mkpart root ext4 1GiB 100%
+sudo mkfs.vfat -n BOOT  /dev/nvme0n1p1
+sudo mkfs.ext4 -L nixos /dev/nvme0n1p2
+sudo mount /dev/disk/by-label/nixos /mnt
+sudo mkdir -p /mnt/boot
+sudo mount /dev/disk/by-label/BOOT /mnt/boot
+
+# 4. Install (WLAN is available in the live system via NetworkManager)
+sudo nixos-install --flake github:HTill/nixos-config/framework13-homeserver#framework
+
+# 5. Reboot, remove the stick. After first boot:
+sudo tailscale up        # homeserver reachable from anywhere
+# create Forgejo admin user (see "Local homeserver" section above)
+```
 
 ## Usage Examples
 
