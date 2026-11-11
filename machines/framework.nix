@@ -102,13 +102,16 @@
     { device = "/swapfile"; priority = 1000; size = 4096; }
   ];
 
-  # File systems (ANPASSEN an die Partitionen der Installation!)
+  # File systems — referenced by LABEL so the config is portable.
+  # During install create them with:
+  #   sudo mkfs.vfat -n BOOT  /dev/nvme0n1p1   # ESP, 1 GiB, esp flag
+  #   sudo mkfs.ext4 -L nixos /dev/nvme0n1p2   # root, rest of the disk
   fileSystems."/" = {
-    device = "/dev/nvme0n1p2";
+    device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
   };
   fileSystems."/boot" = {
-    device = "/dev/nvme0n1p1";
+    device = "/dev/disk/by-label/BOOT";
     fsType = "vfat";
     mountOptions = [ "defaults" "umask=0077" ];
   };
