@@ -43,15 +43,20 @@
   };
 
   # --- Firewall ---
-  # Tailscale interface is fully trusted (Forgejo + SSH reachable via VPN).
+  # Tailscale interface is fully trusted (SSH + Forgejo reachable via VPN).
   networking.firewall.trustedInterfaces = [ "tailscale0" ];
-  # Inside the home LAN/WLAN (private RFC1918 ranges only) allow Forgejo
-  # HTTP (3000) and git+SSH (2222) — nothing is exposed to the public internet.
+  # Nothing exposed to the public internet: no globally open TCP ports.
+  # SSH (22), Forgejo HTTP (3000) and git-ssh (2222) are allowed only from
+  # private LAN/WLAN ranges (RFC1918) — plus Tailscale via trustedInterfaces.
+  networking.firewall.allowedTCPPorts = lib.mkForce [ ];
   networking.firewall.extraCommands = ''
+    ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 22   -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 3000 -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 192.168.0.0/16 --dport 2222 -j nixos-fw-accept
+    ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 22   -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 3000 -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 10.0.0.0/8     --dport 2222 -j nixos-fw-accept
+    ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 22   -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 3000 -j nixos-fw-accept
     ip46tables -A nixos-fw -p tcp -s 172.16.0.0/12  --dport 2222 -j nixos-fw-accept
   '';

@@ -297,9 +297,15 @@ The Framework laptop doubles as a private homeserver:
   Git over SSH: `ssh://git@framework:2222/<user>/<repo>.git`
   (Forgejo's own SSH on port 2222; system sshd stays on 22).
   New repos are **private by default**, registration is disabled.
-- Firewall: Tailscale interface trusted; ports 3000/2222 additionally open
-  **only for private LAN ranges** (192.168/16, 10/8, 172.16/12) — nothing is
-  exposed to the public internet.
+- Firewall: Tailscale interface trusted; ports **22/3000/2222** additionally
+  open **only for private LAN ranges** (192.168/16, 10/8, 172.16/12) — nothing
+  is exposed to the public internet.
+- **SSH access from your other machines:** the public key of this repo's
+  `secrets.yaml` (`ssh.public_key`) is deployed to `till`'s `authorized_keys`
+  on the server. From another machine in the home LAN:
+  `ssh till@framework.local` (mDNS) — or from anywhere via Tailscale:
+  `ssh till@framework.<tailnet>.ts.net`. Add a `~/.ssh/config` Host entry with
+  `IdentityFile` pointing at the matching private key.
 - First boot, create your admin user:
   ```bash
   sudo -u forgejo forgejo admin user create --admin \
